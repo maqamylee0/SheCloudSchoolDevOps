@@ -1,6 +1,6 @@
 # She Code Africa Cloud School Program Final Project
 Using Terraform to provision AKS,ACR and MSSQL database to deploy full stack application on kubernetes
-
+![Architecture](https://github.com/maqamylee0/SheCodesFullstackAppDevops/blob/main/Add%20a%20heading%20(5).png)
 ## About 
 This is a final project for the She cloud Africa Cloud School Program 2023.
 
