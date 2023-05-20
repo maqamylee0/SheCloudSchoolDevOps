@@ -1,0 +1,152 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 2.65"
+    }
+
+    random = {
+      source  = "hashicorp/random"
+      version = "3.1.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "emmilly-rg" {
+  name     = "emmilly_mssql_acr_aks_rg"
+  location = "South Africa North"
+}
+
+# data "azurerm_subnet" "SubnetA" {
+#   name                 = "SubnetA"
+#   virtual_network_name = azurerm_virtual_network.app_network.name
+#   resource_group_name  = azurerm_resource_group.emmilly-rg.name
+# }
+
+# resource "azurerm_virtual_network" "app_network" {
+#   name                = "app-network"
+#   location            = azurerm_resource_group.emmilly-rg.location
+#   resource_group_name = azurerm_resource_group.emmilly-rg.name
+#   address_space       = ["10.0.0.0/16"]
+
+#   subnet {
+#     name           = "SubnetA"
+#     address_prefix = "10.0.1.0/24"
+#   }  
+# }
+
+resource "azurerm_container_registry" "emmilly-acr" {
+  name                = "emmillyacr"
+  sku                 = "Premium"
+  resource_group_name = azurerm_resource_group.emmilly-rg.name
+  location            = azurerm_resource_group.emmilly-rg.location
+}
+
+# resource "azurerm_network_interface" "app_interface" {
+#   name                = "app-interface"
+#   location            = azurerm_resource_group.emmilly-rg.location
+#   resource_group_name = azurerm_resource_group.emmilly-rg.name
+
+#   ip_configuration {
+#     name                          = "internal"
+#     subnet_id                     = data.azurerm_subnet.SubnetA.id
+#     private_ip_address_allocation = "Dynamic"
+#     public_ip_address_id = azurerm_public_ip.pub-ip.id
+#   }
+
+#   depends_on = [
+#     azurerm_virtual_network.app_network,
+#     azurerm_public_ip.pub-ip
+#   ]
+# }
+
+# resource "azurerm_public_ip" "pub-ip" {
+#   name                = "acceptanceTestPublicIp1"
+#   resource_group_name = azurerm_resource_group.emmilly-rg.name
+#   location            = azurerm_resource_group.emmilly-rg.location
+#   allocation_method   = "Static"
+#    sku                 = "Standard"
+
+#   tags = {
+#     environment = "Production"
+#   }
+# }
+
+
+resource "azurerm_kubernetes_cluster" "emmilly-k8s-cluster" {
+  name                = "emmilly-aks"
+  location            = azurerm_resource_group.emmilly-rg.location
+  resource_group_name = azurerm_resource_group.emmilly-rg.name
+  dns_prefix          = "emmilly-dns"
+  public_network_access_enabled = true
+
+  network_profile {
+    network_plugin = "kubenet"
+    load_balancer_sku = "standard"
+
+  
+  }
+
+  default_node_pool {
+    name       = "default"
+    node_count = 1
+    vm_size    = "Standard_D2_v2"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = {
+    Environment = "Production"
+  }
+}
+
+resource "azurerm_role_assignment" "enablePulling" {
+  principal_id                     = azurerm_kubernetes_cluster.emmilly-k8s-cluster.kubelet_identity[0].object_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.emmilly-acr.id
+  skip_service_principal_aad_check = true
+}
+
+
+
+resource "azurerm_mssql_server" "test-server" {
+  name                         = "sqltest-server-emmilly"
+  resource_group_name          = azurerm_resource_group.emmilly-rg.name
+  location                     = azurerm_resource_group.emmilly-rg.location
+  version                      = "12.0"
+  administrator_login          = "emmilly"
+  administrator_login_password = "emily@256"
+  minimum_tls_version          = "1.2"
+
+}
+
+resource "azurerm_mssql_database" "test-db" {
+  name           = "sqltest"
+  server_id      = azurerm_mssql_server.test-server.id
+  collation      = "SQL_Latin1_General_CP1_CI_AS"
+  license_type   = "LicenseIncluded"
+  read_scale     = false
+  sku_name       = "S0"
+  zone_redundant = false
+  sample_name    = "AdventureWorksLT"
+
+  tags = {
+    dev = "Production"
+  }
+}
+output "client_certificate" {
+  value = azurerm_kubernetes_cluster.emmilly-k8s-cluster.kube_config.0.client_certificate
+}
+
+output "kube_config" {
+  value = azurerm_kubernetes_cluster.emmilly-k8s-cluster.kube_config_raw
+
+  sensitive = true
+}
+

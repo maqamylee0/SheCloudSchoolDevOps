@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-shecloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-shecloud
+  template:
+    metadata:
+      labels:
+        app: azure-shecloud
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: azure-shecloud
+        image: emmillyacr.azurecr.io/shecloud:latest
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 3000
+          name: azure-shecloud
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-shecloud
+spec:
+  type: LoadBalancer  
+  ports:
+  - port: 3000
+  selector:
+    app: azure-shecloud
+---
