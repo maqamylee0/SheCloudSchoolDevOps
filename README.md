@@ -70,4 +70,4 @@ kubectl apply -f node_mssql.yaml
 kubectl get svc
 
 ```
-
+![](https://github.com/maqamylee0/SheCloudSchoolDevOps/blob/main/Screenshot%20from%202023-05-20%2017-32-15.png)
