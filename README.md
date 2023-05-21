@@ -4,7 +4,7 @@ Using Terraform to provision AKS,ACR and MSSQL database to deploy full stack app
 ## About 
 This is a final project for the She cloud Africa Cloud School Program 2023.
 
-It is a fullstack project that pull data from a database and displays on the website.
+It is a fullstack project that queries data from a Azure SQL Sample database and displays on the website.
 The project contains two text files and should translate to the main.tf and node_mssql.yaml file.
 Due to the size limit of github, i decided to upload them as text files.
 
