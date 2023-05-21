@@ -32,6 +32,7 @@ Due to the size limit of github, i decided to upload them as text files.
 4. Pushed the image to Azure Container Registry.
 5. Used a yaml file to deploy the app on Azure Kubernetes Service
 
+## [My article link step by step ](https://dev.to/maqamylee0/deploying-a-fullstack-app-using-terraform-to-provision-acraksand-ms-sql-database-2ao8)
 ## How to run the project.
 
 1. Clone project
